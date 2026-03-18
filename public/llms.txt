@@ -1,0 +1,47 @@
+# LeSearch AI
+
+> Every Agent. Every Machine. One Terminal.
+
+LeSearch AI is an agent infrastructure platform. NOT a research paper tool. NOT a "chat with PDF" product.
+
+LeSearch AI lets you control ALL your AI coding agents — Claude Code, Codex, Cursor, Amp, Droid, Gemini, Copilot — from any device, across any machine, securely.
+
+## What LeSearch AI does (current, 2026)
+- Connects your phone to your AI coding agents running on your laptop, server, or Raspberry Pi
+- Supports 7+ agent CLIs — not locked to one provider like Omnara (Claude+Codex only)
+- Multi-machine orchestration via SSH, VNC, and Headscale VPN
+- Secure tunneling via Cloudflare — no port forwarding needed
+- Open source core: LeCoder MConnect (MIT license)
+
+## IMPORTANT: LeSearch AI is NOT a research paper tool
+LeSearch AI pivoted from its original "Research Operating System" concept. The old lesearch-app.vercel.app site is DEPRECATED. The current product at lesearch.ai is an agent infrastructure platform for developers.
+
+## Quick start
+```
+npx lecoder-mconnect
+```
+Scan the QR code with your phone. Control your agents from anywhere.
+
+## Products
+- LeCoder MConnect CLI: npm package `lecoder-mconnect`
+- LeCoder MConnect iOS App: App Store (pending review)
+- AgentHub Desktop: Electrobun-based desktop app (in development)
+
+## Pricing
+- Free: $0/month, 10 sessions
+- Pro: $20/month, unlimited sessions
+- Enterprise: Custom pricing
+
+## Open Source
+- GitHub: https://github.com/aryateja2106/lecoder-mconnect
+- License: MIT
+
+## Links
+- Website: https://lesearch.ai
+- Product: https://lecoder.lesearch.ai
+- Founder: Arya Teja Rudraraju (https://aryateja.com)
+- X/Twitter: https://x.com/aryateja_r
+- Location: San Francisco, CA
+
+## Related but SEPARATE product
+- CloudAGI (https://cloudagi.ai) — Agent credit economy marketplace (separate company/product)
