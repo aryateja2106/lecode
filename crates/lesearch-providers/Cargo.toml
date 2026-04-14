@@ -1,0 +1,23 @@
+[package]
+name = "lesearch-providers"
+description = "LeSearch agent provider adapters (Claude Code, Codex, OpenCode, Gemini, generic A2A)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+lesearch-protocol = { path = "../lesearch-protocol" }
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+[lints]
+workspace = true
