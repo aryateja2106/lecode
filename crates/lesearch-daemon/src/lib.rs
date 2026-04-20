@@ -20,6 +20,7 @@ use axum::extract::State;
 use axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
 use axum::response::IntoResponse;
 use axum::routing::get;
+use chrono::{DateTime, Utc};
 use futures::{SinkExt as _, StreamExt as _};
 use tokio::io::{AsyncBufReadExt as _, BufReader};
 use tokio::net::TcpListener;
@@ -65,42 +66,108 @@ fn alloc_stream_ids() -> StreamIds {
 // ── Agent registry ─────────────────────────────────────────────────────────
 
 /// Metadata stored per registered agent.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 struct AgentEntry {
     /// Assigned stream channel IDs (stable for the lifetime of the agent).
     #[allow(dead_code)]
     streams: StreamIds,
     /// Provider name used to spawn this agent.
-    #[allow(dead_code)]
     provider: String,
+    /// UTC timestamp when the agent was spawned.
+    started_at: DateTime<Utc>,
+    /// Live child process handle (used for `agent.stop`).
+    child: Option<tokio::process::Child>,
+}
+
+/// Public summary of a running agent, returned by `agent.list`.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct AgentSummary {
+    /// Stable agent identifier.
+    pub agent_id: String,
+    /// Provider that was used to spawn this agent.
+    pub provider: String,
+    /// ISO-8601 UTC timestamp of when the agent was started.
+    pub started_at: String,
 }
 
 /// Shared agent manager state, accessible from all WebSocket handlers.
 #[derive(Debug, Default)]
 pub struct AgentManager {
     agents: Mutex<HashMap<String, AgentEntry>>,
+    /// Timestamp when the daemon started (used for uptime calculation).
+    started_at: std::sync::OnceLock<DateTime<Utc>>,
 }
 
 impl AgentManager {
     /// Create a new, empty agent manager.
     #[must_use]
     pub fn new() -> Arc<Self> {
-        Arc::new(Self::default())
+        let mgr = Arc::new(Self::default());
+        // Record startup time immediately.
+        let _ = mgr.started_at.set(Utc::now());
+        mgr
+    }
+
+    /// How many seconds since this manager was created.
+    #[must_use]
+    pub fn uptime_secs(&self) -> u64 {
+        self.started_at.get().map_or(0, |t| {
+            (Utc::now() - t)
+                .num_seconds()
+                .try_into()
+                .unwrap_or_default()
+        })
     }
 
     /// Register a new agent and return its stable [`SpawnResult`].
     ///
     /// Allocates three distinct non-zero stream IDs for the agent's stdio
     /// channels.
-    pub async fn register_agent(&self, params: &SpawnParams) -> SpawnResult {
+    pub async fn register_agent(
+        &self,
+        params: &SpawnParams,
+        child: tokio::process::Child,
+    ) -> SpawnResult {
         let agent_id = uuid::Uuid::now_v7().to_string();
         let streams = alloc_stream_ids();
         let entry = AgentEntry {
             streams,
             provider: params.provider.clone(),
+            started_at: Utc::now(),
+            child: Some(child),
         };
         self.agents.lock().await.insert(agent_id.clone(), entry);
         SpawnResult { agent_id, streams }
+    }
+
+    /// List all currently-registered agents.
+    pub async fn list_agents(&self) -> Vec<AgentSummary> {
+        self.agents
+            .lock()
+            .await
+            .iter()
+            .map(|(id, entry)| AgentSummary {
+                agent_id: id.clone(),
+                provider: entry.provider.clone(),
+                started_at: entry.started_at.to_rfc3339(),
+            })
+            .collect()
+    }
+
+    /// Stop a specific agent by ID. Returns `true` if the agent existed.
+    pub async fn stop_agent(&self, agent_id: &str) -> bool {
+        let mut agents = self.agents.lock().await;
+        if let Some(entry) = agents.get_mut(agent_id) {
+            if let Some(mut child) = entry.child.take() {
+                // Best-effort kill; ignore errors.
+                let _ = child.kill().await;
+                let _ = child.wait().await;
+            }
+            agents.remove(agent_id);
+            true
+        } else {
+            false
+        }
     }
 }
 
@@ -191,14 +258,18 @@ async fn dispatch(state: &AppState, raw: &str, out_tx: mpsc::Sender<String>) -> 
 
     let id = req.id.clone();
 
-    if req.method.as_str() == "agent.spawn" {
-        handle_agent_spawn(state, id, req.params, out_tx).await
-    } else {
-        let err = RpcError::new(id, -32_601, "Method not found");
-        serde_json::to_string(&err).unwrap_or_else(|_| {
-            r#"{"jsonrpc":"2.0","id":null,"error":{"code":-32601,"message":"Method not found"}}"#
-                .to_owned()
-        })
+    match req.method.as_str() {
+        "agent.spawn" => handle_agent_spawn(state, id, req.params, out_tx).await,
+        "agent.list" => handle_agent_list(state, id).await,
+        "agent.stop" => handle_agent_stop(state, id, req.params).await,
+        "server.handshake" => handle_server_handshake(state, id),
+        _ => {
+            let err = RpcError::new(id, -32_601, "Method not found");
+            serde_json::to_string(&err).unwrap_or_else(|_| {
+                r#"{"jsonrpc":"2.0","id":null,"error":{"code":-32601,"message":"Method not found"}}"#
+                    .to_owned()
+            })
+        }
     }
 }
 
@@ -240,11 +311,8 @@ async fn handle_agent_spawn(
         return serde_json::to_string(&err).unwrap_or_else(|_| INTERNAL_ERROR_JSON.to_owned());
     };
 
-    let result = state.manager.register_agent(&spawn_params).await;
-    let agent_id = result.agent_id.clone();
-
     let provider_params = lesearch_providers::SpawnParams {
-        label: agent_id.clone(),
+        label: uuid::Uuid::now_v7().to_string(),
         provider: spawn_params.provider.clone(),
         prompt: None,
         worktree: spawn_params.worktree.clone(),
@@ -258,16 +326,26 @@ async fn handle_agent_spawn(
         }
     };
 
-    let spawn_result = match provider.spawn(&spec).await {
-        Ok(r) => r,
+    let mut provider_child = match provider.spawn(&spec).await {
+        Ok(r) => r.child,
         Err(e) => {
             let err = RpcError::new(id, -32_603, &e.to_string());
             return serde_json::to_string(&err).unwrap_or_else(|_| INTERNAL_ERROR_JSON.to_owned());
         }
     };
 
-    if let Some(stdout) = spawn_result.child.stdout {
-        let agent_id_owned = agent_id.clone();
+    // Take stdout *before* moving child into the manager.
+    let stdout = provider_child.stdout.take();
+
+    // Register with the manager (takes ownership of child for lifecycle management).
+    let result = state
+        .manager
+        .register_agent(&spawn_params, provider_child)
+        .await;
+    let agent_id = result.agent_id.clone();
+
+    if let Some(stdout) = stdout {
+        let agent_id_owned = agent_id;
         let tx = out_tx.clone();
         tokio::spawn(async move {
             let reader = BufReader::new(stdout);
@@ -297,6 +375,55 @@ async fn handle_agent_spawn(
     };
 
     let resp = RpcResponse::ok(id, result_value);
+    serde_json::to_string(&resp).unwrap_or_else(|_| INTERNAL_ERROR_JSON.to_owned())
+}
+
+/// Handle `agent.list` — return all currently-running agents.
+async fn handle_agent_list(state: &AppState, id: serde_json::Value) -> String {
+    let agents = state.manager.list_agents().await;
+    let payload = serde_json::json!({ "agents": agents });
+    let resp = RpcResponse::ok(id, payload);
+    serde_json::to_string(&resp).unwrap_or_else(|_| INTERNAL_ERROR_JSON.to_owned())
+}
+
+/// Parameters for `agent.stop`.
+#[derive(serde::Deserialize)]
+struct StopParams {
+    agent_id: String,
+}
+
+/// Handle `agent.stop` — kill the named agent's subprocess.
+async fn handle_agent_stop(
+    state: &AppState,
+    id: serde_json::Value,
+    params: serde_json::Value,
+) -> String {
+    let stop_params: StopParams = if let Ok(p) = serde_json::from_value(params) {
+        p
+    } else {
+        let err = RpcError::new(id, -32_602, "Invalid params: expected {agent_id}");
+        return serde_json::to_string(&err).unwrap_or_else(|_| INTERNAL_ERROR_JSON.to_owned());
+    };
+
+    let stopped = state.manager.stop_agent(&stop_params.agent_id).await;
+    if stopped {
+        let resp = RpcResponse::ok(id, serde_json::json!({ "stopped": true }));
+        serde_json::to_string(&resp).unwrap_or_else(|_| INTERNAL_ERROR_JSON.to_owned())
+    } else {
+        let err = RpcError::new(id, -32_602, "Agent not found");
+        serde_json::to_string(&err).unwrap_or_else(|_| INTERNAL_ERROR_JSON.to_owned())
+    }
+}
+
+/// Handle `server.handshake` — return daemon version and uptime.
+fn handle_server_handshake(state: &AppState, id: serde_json::Value) -> String {
+    let uptime_secs = state.manager.uptime_secs();
+    let payload = serde_json::json!({
+        "version": env!("CARGO_PKG_VERSION"),
+        "protocol": lesearch_protocol::version(),
+        "uptime_secs": uptime_secs,
+    });
+    let resp = RpcResponse::ok(id, payload);
     serde_json::to_string(&resp).unwrap_or_else(|_| INTERNAL_ERROR_JSON.to_owned())
 }
 

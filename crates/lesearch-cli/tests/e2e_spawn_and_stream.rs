@@ -43,7 +43,7 @@ async fn cli_spawns_agent_and_streams_stdout() {
     let cli_bin = env!("CARGO_BIN_EXE_lesearch-cli");
 
     let mut child = Command::new(cli_bin)
-        .args(["--addr", &ws_addr, "--provider", TEST_PROVIDER_ID])
+        .args(["run", "--addr", &ws_addr, "--provider", TEST_PROVIDER_ID])
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped())
         .spawn()
