@@ -1,0 +1,11 @@
+# Exclude build artifacts and generated files from language statistics
+web/.next/** linguist-generated=true
+**/*.lock linguist-generated=true
+package-lock.json linguist-generated=true
+
+# Docs are text, not code
+docs/** linguist-documentation=true
+SPEC/** linguist-documentation=true
+
+# Explicit language classification
+*.rsc linguist-language=RSC
