@@ -46,9 +46,8 @@ export default function Architecture() {
             margin: "0 0 72px",
           }}
         >
-          Your devices connect through LeSearch Cloud routing, which maintains
-          secure tunnels to all your machines. No direct exposure, no open
-          ports.
+          Your devices connect through LeSearch Cloud routing, which maintains secure tunnels to all
+          your machines. No direct exposure, no open ports.
         </p>
       </FadeIn>
 
@@ -71,9 +70,7 @@ export default function Architecture() {
             }}
           >
             {/* Your devices row */}
-            <div
-              style={{ display: "flex", alignItems: "center", gap: "12px" }}
-            >
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               {[
                 ["Phone", "MConnect iOS"],
                 ["Laptop", "Browser / SSH"],
@@ -99,11 +96,7 @@ export default function Architecture() {
                   >
                     {label}
                   </div>
-                  <div
-                    style={{ fontSize: "11px", color: "#52525B", marginTop: "4px" }}
-                  >
-                    {sub}
-                  </div>
+                  <div style={{ fontSize: "11px", color: "#52525B", marginTop: "4px" }}>{sub}</div>
                 </div>
               ))}
             </div>
@@ -157,24 +150,21 @@ export default function Architecture() {
                   justifyContent: "center",
                 }}
               >
-                {["Headscale VPN", "Cloudflare Tunnel", "SSH Proxy", "VNC Gateway"].map(
-                  (label) => (
-                    <span
-                      key={label}
-                      style={{
-                        padding: "3px 10px",
-                        fontSize: "11px",
-                        color: "#71717A",
-                        border: "1px solid #27272A",
-                        borderRadius: "4px",
-                        fontFamily:
-                          "'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', monospace",
-                      }}
-                    >
-                      {label}
-                    </span>
-                  )
-                )}
+                {["Headscale VPN", "Cloudflare Tunnel", "SSH Proxy", "VNC Gateway"].map((label) => (
+                  <span
+                    key={label}
+                    style={{
+                      padding: "3px 10px",
+                      fontSize: "11px",
+                      color: "#71717A",
+                      border: "1px solid #27272A",
+                      borderRadius: "4px",
+                      fontFamily: "'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', monospace",
+                    }}
+                  >
+                    {label}
+                  </span>
+                ))}
               </div>
             </div>
 
@@ -200,9 +190,7 @@ export default function Architecture() {
             </div>
 
             {/* Your machines */}
-            <div
-              style={{ display: "flex", alignItems: "center", gap: "12px" }}
-            >
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               {[
                 ["Raspberry Pi", "Dallas, TX · 24/7"],
                 ["Server", "Cloud / bare metal"],
@@ -228,11 +216,7 @@ export default function Architecture() {
                   >
                     {label}
                   </div>
-                  <div
-                    style={{ fontSize: "11px", color: "#52525B", marginTop: "4px" }}
-                  >
-                    {sub}
-                  </div>
+                  <div style={{ fontSize: "11px", color: "#52525B", marginTop: "4px" }}>{sub}</div>
                 </div>
               ))}
             </div>

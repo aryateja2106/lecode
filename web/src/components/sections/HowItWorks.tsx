@@ -91,8 +91,7 @@ export default function HowItWorks() {
                   color: "#3F3F46",
                   letterSpacing: "0.06em",
                   marginBottom: "24px",
-                  fontFamily:
-                    "'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', monospace",
+                  fontFamily: "'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', monospace",
                 }}
               >
                 {s.step}
@@ -128,8 +127,7 @@ export default function HowItWorks() {
                   background: "#18181B",
                   border: "1px solid #27272A",
                   borderRadius: "6px",
-                  fontFamily:
-                    "'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', monospace",
+                  fontFamily: "'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', monospace",
                 }}
               >
                 {s.detail}

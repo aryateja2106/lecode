@@ -84,8 +84,7 @@ export default function Problem() {
                   color: "#3F3F46",
                   letterSpacing: "0.06em",
                   marginBottom: "20px",
-                  fontFamily:
-                    "'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', monospace",
+                  fontFamily: "'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', monospace",
                 }}
               >
                 {p.number}

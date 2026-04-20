@@ -6,9 +6,7 @@ export default function Pricing() {
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
             Simple, transparent pricing
           </h2>
-          <p className="text-zinc-400 text-lg">
-            Choose the plan that fits your needs
-          </p>
+          <p className="text-zinc-400 text-lg">Choose the plan that fits your needs</p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">

@@ -1,0 +1,60 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.4.12/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "includes": ["**", "!*.lock"]
+  },
+  "formatter": {
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double",
+      "trailingCommas": "all",
+      "semicolons": "always"
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "security": {
+        "noDangerouslySetInnerHtml": "warn"
+      },
+      "suspicious": {
+        "noArrayIndexKey": "warn"
+      },
+      "a11y": {
+        "noSvgWithoutTitle": "warn",
+        "useValidAnchor": "warn",
+        "useButtonType": "warn",
+        "useAltText": "warn",
+        "useHtmlLang": "warn",
+        "useAnchorContent": "warn",
+        "noHeaderScope": "warn",
+        "noRedundantAlt": "warn",
+        "noAccessKey": "warn",
+        "noAriaHiddenOnFocusable": "warn",
+        "noDistractingElements": "warn",
+        "noInteractiveElementToNoninteractiveRole": "warn",
+        "noNoninteractiveElementToInteractiveRole": "warn",
+        "noNoninteractiveTabindex": "warn",
+        "noPositiveTabindex": "warn",
+        "useAriaActivedescendantWithTabindex": "warn",
+        "useAriaPropsForRole": "warn",
+        "useHeadingContent": "warn",
+        "useIframeTitle": "warn",
+        "useKeyWithClickEvents": "warn",
+        "useKeyWithMouseEvents": "warn",
+        "useMediaCaption": "warn",
+        "useSemanticElements": "warn"
+      }
+    }
+  }
+}

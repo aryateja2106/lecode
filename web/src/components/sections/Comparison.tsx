@@ -32,18 +32,41 @@ const rows = [
 
 function Check() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, marginTop: "2px" }}>
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      style={{ flexShrink: 0, marginTop: "2px" }}
+    >
       <circle cx="8" cy="8" r="7.5" stroke="#3F3F46" />
-      <path d="M4.5 8L7 10.5L11.5 6" stroke="#FAFAFA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M4.5 8L7 10.5L11.5 6"
+        stroke="#FAFAFA"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
 
 function Cross() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, marginTop: "2px" }}>
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      style={{ flexShrink: 0, marginTop: "2px" }}
+    >
       <circle cx="8" cy="8" r="7.5" stroke="#27272A" />
-      <path d="M5.5 5.5L10.5 10.5M10.5 5.5L5.5 10.5" stroke="#3F3F46" strokeWidth="1.5" strokeLinecap="round" />
+      <path
+        d="M5.5 5.5L10.5 10.5M10.5 5.5L5.5 10.5"
+        stroke="#3F3F46"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -92,8 +115,8 @@ export default function Comparison() {
             margin: "0 0 48px",
           }}
         >
-          Other tools connect one agent to one machine. LeSearch connects
-          everything to everything — securely, from any device.
+          Other tools connect one agent to one machine. LeSearch connects everything to everything —
+          securely, from any device.
         </p>
       </FadeIn>
 
@@ -114,8 +137,7 @@ export default function Comparison() {
         >
           <div
             style={{
-              fontFamily:
-                "'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', monospace",
+              fontFamily: "'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', monospace",
               fontSize: "14px",
               color: "#e0e7ff",
               flex: 1,
