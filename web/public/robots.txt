@@ -1,0 +1,23 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://lesearch.ai/sitemap.xml
+
+# AI Agent Discovery
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
