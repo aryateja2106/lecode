@@ -310,13 +310,20 @@ export default function Hero() {
       </motion.div>
 
       {/* Terminal Mockup */}
+      {/* Outer clip wrapper: prevents terminal content from leaking into page-level scroll on mobile */}
+      <div
+        style={{
+          width: "100%",
+          maxWidth: "680px",
+          overflow: "clip",
+        }}
+      >
       <motion.div
         initial={{ opacity: 0, y: 32 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.65, delay: 0.36 }}
         style={{
           width: "100%",
-          maxWidth: "680px",
           borderRadius: "14px",
           border: "1px solid #27272A",
           background: "#0D0D0F",
@@ -368,6 +375,7 @@ export default function Hero() {
             fontFamily: "'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', monospace",
             fontSize: "13px",
             lineHeight: "1.7",
+            overflowX: "auto",
           }}
         >
           {terminalLines.map((line, i) => {
@@ -434,6 +442,7 @@ export default function Hero() {
           })}
         </div>
       </motion.div>
+      </div>
 
       <style>{`
         @keyframes blink {
