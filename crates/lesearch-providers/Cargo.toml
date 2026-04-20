@@ -11,6 +11,9 @@ readme.workspace = true
 keywords.workspace = true
 categories.workspace = true
 
+[features]
+test-provider = []
+
 [dependencies]
 lesearch-protocol = { path = "../lesearch-protocol" }
 tokio.workspace = true
@@ -25,6 +28,3 @@ tempfile.workspace = true
 
 [lints]
 workspace = true
-
-[features]
-test-provider = []
