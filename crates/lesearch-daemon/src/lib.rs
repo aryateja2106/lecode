@@ -7,6 +7,8 @@
 
 #![doc(html_root_url = "https://docs.rs/lesearch-daemon/0.0.1")]
 
+pub mod agent_manager;
+
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::Arc;
