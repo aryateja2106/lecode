@@ -10,6 +10,7 @@
 pub mod agent_manager;
 
 use std::collections::HashMap;
+use std::hash::BuildHasher;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU16, Ordering};
@@ -19,10 +20,14 @@ use axum::extract::State;
 use axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
 use axum::response::IntoResponse;
 use axum::routing::get;
+use futures::{SinkExt as _, StreamExt as _};
+use tokio::io::{AsyncBufReadExt as _, BufReader};
 use tokio::net::TcpListener;
 use tokio::sync::Mutex;
+use tokio::sync::mpsc;
 
 use lesearch_protocol::{RpcError, RpcRequest, RpcResponse, SpawnParams, SpawnResult, StreamIds};
+use lesearch_providers::AgentProvider;
 
 /// Returns the compiled protocol version this daemon speaks.
 #[must_use]
@@ -95,12 +100,12 @@ impl AgentManager {
     ///
     /// Allocates three distinct non-zero stream IDs for the agent's stdio
     /// channels.
-    pub async fn register_agent(&self, params: SpawnParams) -> SpawnResult {
+    pub async fn register_agent(&self, params: &SpawnParams) -> SpawnResult {
         let agent_id = uuid::Uuid::now_v7().to_string();
         let streams = alloc_stream_ids();
         let entry = AgentEntry {
             streams,
-            provider: params.provider,
+            provider: params.provider.clone(),
         };
         self.agents.lock().await.insert(agent_id.clone(), entry);
         SpawnResult { agent_id, streams }
@@ -113,11 +118,29 @@ impl AgentManager {
 #[derive(Clone)]
 struct AppState {
     manager: Arc<AgentManager>,
+    /// Provider registry: maps provider id → boxed provider.
+    providers: Arc<HashMap<String, Arc<dyn AgentProvider>>>,
 }
 
-/// Build an axum [`Router`] wired to the given [`AgentManager`].
-pub fn build_router(manager: Arc<AgentManager>) -> Router {
-    let state = AppState { manager };
+/// Build an axum [`Router`] wired to the given [`AgentManager`] and provider map.
+///
+/// The `providers` map is generalized over its hasher so callers may pass any
+/// [`HashMap`] variant (e.g. `AHashMap`, `FxHashMap`).
+pub fn build_router<S>(
+    manager: Arc<AgentManager>,
+    providers: Arc<HashMap<String, Arc<dyn AgentProvider>, S>>,
+) -> Router
+where
+    S: BuildHasher + Send + Sync + 'static,
+{
+    // Normalize to the std default hasher for the shared AppState.
+    let providers: Arc<HashMap<String, Arc<dyn AgentProvider>>> = Arc::new(
+        providers
+            .iter()
+            .map(|(k, v)| (k.clone(), Arc::clone(v)))
+            .collect(),
+    );
+    let state = AppState { manager, providers };
     Router::new()
         .route("/ws", get(ws_handler))
         .with_state(state)
@@ -129,8 +152,30 @@ async fn ws_handler(ws: WebSocketUpgrade, State(state): State<AppState>) -> impl
 }
 
 /// Drive a single WebSocket connection, dispatching JSON-RPC messages.
-async fn handle_socket(mut socket: WebSocket, state: AppState) {
-    while let Some(Ok(msg)) = socket.recv().await {
+///
+/// After a successful `agent.spawn`, a background task streams
+/// `agent.output` notifications from the child process's stdout back to
+/// the same connection via an mpsc channel.
+async fn handle_socket(socket: WebSocket, state: AppState) {
+    // Split the socket into sender and receiver halves.
+    let (mut ws_tx, mut ws_rx) = socket.split();
+
+    // Channel for background tasks to push outbound frames.
+    let (out_tx, mut out_rx) = mpsc::channel::<String>(64);
+
+    // Forward loop: drain the mpsc channel into the WebSocket sender.
+    let forward_handle = tokio::spawn(async move {
+        while let Some(json) = out_rx.recv().await {
+            if ws_tx.send(Message::Text(json.into())).await.is_err() {
+                break;
+            }
+        }
+        // Graceful close.
+        let _ = ws_tx.close().await;
+    });
+
+    // Receive loop: handle inbound JSON-RPC requests.
+    while let Some(Ok(msg)) = ws_rx.next().await {
         let text = match msg {
             Message::Text(t) => t,
             Message::Close(_) => break,
@@ -138,11 +183,15 @@ async fn handle_socket(mut socket: WebSocket, state: AppState) {
             _ => continue,
         };
 
-        let reply = dispatch(&state, &text).await;
-        if socket.send(Message::Text(reply.into())).await.is_err() {
+        let reply = dispatch(&state, &text, out_tx.clone()).await;
+        if out_tx.send(reply).await.is_err() {
             break;
         }
     }
+
+    // Drop the sender so the forward loop terminates.
+    drop(out_tx);
+    let _ = forward_handle.await;
 }
 
 /// Fallback serialization for error responses: a static JSON string.
@@ -150,7 +199,7 @@ const INTERNAL_ERROR_JSON: &str =
     r#"{"jsonrpc":"2.0","id":null,"error":{"code":-32603,"message":"Internal error"}}"#;
 
 /// Parse a JSON-RPC request and route it to the correct handler.
-async fn dispatch(state: &AppState, raw: &str) -> String {
+async fn dispatch(state: &AppState, raw: &str, out_tx: mpsc::Sender<String>) -> String {
     let req: RpcRequest = if let Ok(r) = serde_json::from_str(raw) {
         r
     } else {
@@ -164,7 +213,7 @@ async fn dispatch(state: &AppState, raw: &str) -> String {
     let id = req.id.clone();
 
     if req.method.as_str() == "agent.spawn" {
-        handle_agent_spawn(state, id, req.params).await
+        handle_agent_spawn(state, id, req.params, out_tx).await
     } else {
         let err = RpcError::new(id, -32_601, "Method not found");
         serde_json::to_string(&err).unwrap_or_else(|_| {
@@ -174,11 +223,30 @@ async fn dispatch(state: &AppState, raw: &str) -> String {
     }
 }
 
-/// Handle `agent.spawn` — validate params, register agent, return stream IDs.
+/// Notification frame sent for each chunk of agent output.
+///
+/// JSON-RPC notifications have no `id` field.
+#[derive(serde::Serialize)]
+struct OutputNotification<'a> {
+    jsonrpc: &'a str,
+    method: &'a str,
+    params: OutputParams<'a>,
+}
+
+/// Parameters of an `agent.output` notification.
+#[derive(serde::Serialize)]
+struct OutputParams<'a> {
+    agent_id: &'a str,
+    data: &'a str,
+}
+
+/// Handle `agent.spawn` — validate params, register agent, spawn provider,
+/// then stream `agent.output` notifications back to the client.
 async fn handle_agent_spawn(
     state: &AppState,
     id: serde_json::Value,
     params: serde_json::Value,
+    out_tx: mpsc::Sender<String>,
 ) -> String {
     let spawn_params: SpawnParams = if let Ok(p) = serde_json::from_value(params) {
         p
@@ -190,8 +258,68 @@ async fn handle_agent_spawn(
         });
     };
 
-    let result = state.manager.register_agent(spawn_params).await;
+    // Look up the provider.
+    let Some(provider) = state.providers.get(&spawn_params.provider).map(Arc::clone) else {
+        let err = RpcError::new(id, -32_602, "Unknown provider");
+        return serde_json::to_string(&err).unwrap_or_else(|_| INTERNAL_ERROR_JSON.to_owned());
+    };
 
+    // Register agent and get stable IDs.
+    let result = state.manager.register_agent(&spawn_params).await;
+    let agent_id = result.agent_id.clone();
+
+    // Build a provider-level SpawnParams from the protocol params.
+    let provider_params = lesearch_providers::SpawnParams {
+        label: agent_id.clone(),
+        provider: spawn_params.provider.clone(),
+        prompt: None,
+        worktree: spawn_params.worktree.clone(),
+    };
+
+    // Resolve the spec and attempt to spawn.
+    let spec = match agent_manager::build_spec(&provider_params) {
+        Ok(s) => s,
+        Err(e) => {
+            let err = RpcError::new(id, -32_603, &e.to_string());
+            return serde_json::to_string(&err).unwrap_or_else(|_| INTERNAL_ERROR_JSON.to_owned());
+        }
+    };
+
+    let spawn_result = match provider.spawn(&spec).await {
+        Ok(r) => r,
+        Err(e) => {
+            let err = RpcError::new(id, -32_603, &e.to_string());
+            return serde_json::to_string(&err).unwrap_or_else(|_| INTERNAL_ERROR_JSON.to_owned());
+        }
+    };
+
+    // Stream stdout lines as `agent.output` notifications.
+    if let Some(stdout) = spawn_result.child.stdout {
+        let agent_id_owned = agent_id.clone();
+        let tx = out_tx.clone();
+        tokio::spawn(async move {
+            let reader = BufReader::new(stdout);
+            let mut lines = reader.lines();
+            while let Ok(Some(line)) = lines.next_line().await {
+                let notif = OutputNotification {
+                    jsonrpc: "2.0",
+                    method: "agent.output",
+                    params: OutputParams {
+                        agent_id: &agent_id_owned,
+                        data: &line,
+                    },
+                };
+                let Ok(json) = serde_json::to_string(&notif) else {
+                    continue;
+                };
+                if tx.send(json).await.is_err() {
+                    break;
+                }
+            }
+        });
+    }
+
+    // Return the spawn response immediately.
     let Ok(result_value) = serde_json::to_value(&result) else {
         let err = RpcError::new(id, -32_603, "Internal error");
         return serde_json::to_string(&err).unwrap_or_else(|_| INTERNAL_ERROR_JSON.to_owned());
@@ -201,13 +329,11 @@ async fn handle_agent_spawn(
     serde_json::to_string(&resp).unwrap_or_else(|_| INTERNAL_ERROR_JSON.to_owned())
 }
 
-// ── Server entry point ─────────────────────────────────────────────────────
+// ── Server entry points ────────────────────────────────────────────────────
 
-/// Bind to `addr`, serve the WebSocket API, and return the bound address plus
-/// a [`tokio::task::JoinHandle`] for the server task.
+/// Bind to `addr`, serve the WebSocket API with an empty provider map.
 ///
-/// Pass `127.0.0.1:0` to let the OS choose an ephemeral port (useful in
-/// tests).
+/// Pass `127.0.0.1:0` to let the OS choose an ephemeral port.
 ///
 /// # Errors
 ///
@@ -216,9 +342,29 @@ pub async fn serve(
     addr: SocketAddr,
     manager: Arc<AgentManager>,
 ) -> Result<(SocketAddr, tokio::task::JoinHandle<()>), std::io::Error> {
+    let providers: Arc<HashMap<String, Arc<dyn AgentProvider>>> = Arc::new(HashMap::new());
+    serve_with_providers(addr, manager, providers).await
+}
+
+/// Bind to `addr` and serve with a pre-populated provider registry.
+///
+/// Use this in tests or custom launchers where specific providers must be
+/// available. Pass `127.0.0.1:0` for an ephemeral port.
+///
+/// # Errors
+///
+/// Returns an error if binding the TCP listener fails.
+pub async fn serve_with_providers<S>(
+    addr: SocketAddr,
+    manager: Arc<AgentManager>,
+    providers: Arc<HashMap<String, Arc<dyn AgentProvider>, S>>,
+) -> Result<(SocketAddr, tokio::task::JoinHandle<()>), std::io::Error>
+where
+    S: BuildHasher + Send + Sync + 'static,
+{
     let listener = TcpListener::bind(addr).await?;
     let bound = listener.local_addr()?;
-    let router = build_router(manager);
+    let router = build_router(manager, providers);
     let handle = tokio::spawn(async move {
         axum::serve(listener, router)
             .await

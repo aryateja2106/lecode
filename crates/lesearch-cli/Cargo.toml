@@ -12,17 +12,24 @@ keywords.workspace = true
 categories.workspace = true
 
 [[bin]]
-name = "lesearch"
+name = "lesearch-cli"
 path = "src/main.rs"
 
 [dependencies]
 lesearch-protocol = { path = "../lesearch-protocol" }
 tokio.workspace = true
+futures.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 anyhow.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
+clap = { version = "4", features = ["derive", "env"] }
+tokio-tungstenite = "0.29"
+
+[dev-dependencies]
+lesearch-daemon = { path = "../lesearch-daemon" }
+lesearch-providers = { path = "../lesearch-providers" }
 
 [lints]
 workspace = true

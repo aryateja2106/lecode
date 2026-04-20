@@ -7,6 +7,7 @@
 #![doc(html_root_url = "https://docs.rs/lesearch-providers/0.0.1")]
 
 pub mod claude;
+pub mod test_provider;
 
 use std::path::PathBuf;
 

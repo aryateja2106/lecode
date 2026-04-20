@@ -4,14 +4,27 @@
 //! The daemon is spun up in-process on an ephemeral port (127.0.0.1:0) and
 //! torn down after each test.
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::net::SocketAddr;
+use std::sync::Arc;
 
-use futures::{SinkExt, StreamExt};
-use lesearch_daemon::{AgentManager, serve};
+use futures::{SinkExt as _, StreamExt as _};
+use lesearch_daemon::{AgentManager, serve_with_providers};
 use lesearch_protocol::SpawnResult;
+use lesearch_providers::AgentProvider;
+use lesearch_providers::test_provider::TestProvider;
 use tokio_tungstenite::connect_async;
 use tokio_tungstenite::tungstenite::Message;
+
+/// Build a provider map with the `TestProvider` registered.
+fn test_providers() -> Arc<HashMap<String, Arc<dyn AgentProvider>>> {
+    let mut map: HashMap<String, Arc<dyn AgentProvider>> = HashMap::new();
+    map.insert(
+        lesearch_providers::test_provider::TEST_PROVIDER_ID.to_owned(),
+        Arc::new(TestProvider::new()),
+    );
+    Arc::new(map)
+}
 
 /// Spin up the daemon, connect via WebSocket, send `agent.spawn`, and verify
 /// the response contains three distinct non-zero stream IDs.
@@ -20,7 +33,9 @@ async fn spawn_returns_nonzero_distinct_stream_ids() {
     // Bind to an ephemeral port so tests don't collide.
     let addr: SocketAddr = "127.0.0.1:0".parse().expect("parse addr");
     let manager = AgentManager::new();
-    let (bound, _server) = serve(addr, manager).await.expect("serve");
+    let (bound, _server) = serve_with_providers(addr, manager, test_providers())
+        .await
+        .expect("serve");
 
     let url = format!("ws://{bound}/ws");
     let (mut ws, _) = connect_async(&url).await.expect("connect ws");
@@ -88,7 +103,9 @@ async fn spawn_returns_nonzero_distinct_stream_ids() {
 async fn two_spawns_produce_six_distinct_ids() {
     let addr: SocketAddr = "127.0.0.1:0".parse().expect("parse addr");
     let manager = AgentManager::new();
-    let (bound, _server) = serve(addr, manager).await.expect("serve");
+    let (bound, _server) = serve_with_providers(addr, manager, test_providers())
+        .await
+        .expect("serve");
 
     let url = format!("ws://{bound}/ws");
     let (mut ws, _) = connect_async(&url).await.expect("connect ws");
