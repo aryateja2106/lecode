@@ -32,7 +32,10 @@ tracing-subscriber.workspace = true
 uuid.workspace = true
 
 [dev-dependencies]
+lesearch-protocol = { path = "../lesearch-protocol" }
+lesearch-providers = { path = "../lesearch-providers", features = ["test-provider"] }
 futures.workspace = true
+tokio.workspace = true
 tokio-tungstenite = "0.29"
 
 [lints]

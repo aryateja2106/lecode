@@ -3,12 +3,14 @@
 //! Wraps the `claude` CLI binary, launching it as a subprocess with stdio
 //! connected to the daemon's streaming pipeline.
 
-use std::path::PathBuf;
+use std::path::Path;
+use std::pin::Pin;
 
-use futures::future::BoxFuture;
+use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::{Child, Command};
+use tokio::sync::mpsc;
 
-use crate::{AgentProvider, AgentSpec, ProviderError, SpawnResult};
+use crate::{AgentEvent, AgentHandle, AgentProvider, AgentSpec, Future, SpawnError, Stream};
 
 /// Binary name for the Claude Code CLI.
 const CLAUDE_BIN: &str = "claude";
@@ -38,7 +40,6 @@ impl ClaudeProvider {
 ///   process inherits the daemon's working directory.
 /// - `stdin`, `stdout`, `stderr` all set to `piped` so the daemon can
 ///   stream them over WebSocket.
-/// - An optional `--print` flag with the prompt when `spec.prompt` is `Some`.
 #[must_use]
 pub fn build_command(spec: &AgentSpec) -> Command {
     build_command_with_bin(CLAUDE_BIN, spec)
@@ -58,11 +59,6 @@ pub fn build_command_with_bin(bin: &str, spec: &AgentSpec) -> Command {
         cmd.current_dir(worktree);
     }
 
-    // Forward the prompt via `--print` for non-interactive mode.
-    if let Some(ref prompt) = spec.prompt {
-        cmd.arg("--print").arg(prompt);
-    }
-
     // Keep all stdio open for the daemon to stream.
     cmd.stdin(std::process::Stdio::piped())
         .stdout(std::process::Stdio::piped())
@@ -71,33 +67,73 @@ pub fn build_command_with_bin(bin: &str, spec: &AgentSpec) -> Command {
     cmd
 }
 
-/// Spawn the configured command, returning the child handle.
-fn do_spawn(cmd: &mut Command) -> Result<Child, ProviderError> {
-    let child = cmd.spawn()?;
-    Ok(child)
+/// Validate that `worktree` exists on disk, if provided.
+fn validate_worktree(worktree: Option<&str>) -> Result<(), SpawnError> {
+    if let Some(path) = worktree {
+        if !Path::new(path).exists() {
+            return Err(SpawnError::Launch(format!(
+                "worktree path does not exist: {path}"
+            )));
+        }
+    }
+    Ok(())
+}
+
+/// Attach stdio readers to a live child and forward lines as [`AgentEvent`]s
+/// over `tx`.
+fn attach_stdio_forwarder(child: &mut Child, tx: mpsc::UnboundedSender<AgentEvent>) {
+    // Take stdout.
+    if let Some(stdout) = child.stdout.take() {
+        let tx_out = tx.clone();
+        tokio::spawn(async move {
+            let mut lines = BufReader::new(stdout).lines();
+            while let Ok(Some(line)) = lines.next_line().await {
+                let _ = tx_out.send(AgentEvent::StreamChunk {
+                    stream: Stream::Stdout,
+                    data: line + "\n",
+                });
+            }
+        });
+    }
+
+    // Take stderr.
+    if let Some(stderr) = child.stderr.take() {
+        tokio::spawn(async move {
+            let mut lines = BufReader::new(stderr).lines();
+            while let Ok(Some(line)) = lines.next_line().await {
+                let _ = tx.send(AgentEvent::StreamChunk {
+                    stream: Stream::Stderr,
+                    data: line + "\n",
+                });
+            }
+        });
+    }
 }
 
 impl AgentProvider for ClaudeProvider {
-    fn spawn<'a>(
-        &'a self,
-        spec: &'a AgentSpec,
-    ) -> BoxFuture<'a, Result<SpawnResult, ProviderError>> {
+    fn spawn(
+        &self,
+        spec: &AgentSpec,
+    ) -> Pin<Box<dyn Future<Output = Result<AgentHandle, SpawnError>> + Send + '_>> {
+        let worktree = spec.worktree.clone();
         Box::pin(async move {
-            // Validate that the worktree exists before attempting to spawn.
-            if let Some(ref worktree) = spec.worktree {
-                if !worktree.exists() {
-                    return Err(ProviderError::WorktreeNotFound(worktree.clone()));
-                }
-            }
+            validate_worktree(worktree.as_deref())?;
 
-            let mut cmd = build_command(spec);
-            let child = do_spawn(&mut cmd)?;
-            Ok(SpawnResult { child })
+            let spec_local = AgentSpec { worktree };
+            let mut cmd = build_command(&spec_local);
+            let mut child = cmd.spawn()?;
+
+            let (tx, rx) = mpsc::unbounded_channel();
+            attach_stdio_forwarder(&mut child, tx.clone());
+
+            // Wait for the child to exit and send an Exited event.
+            tokio::spawn(async move {
+                let code = child.wait().await.ok().and_then(|s| s.code());
+                let _ = tx.send(AgentEvent::Exited { code });
+            });
+
+            Ok(AgentHandle { events: rx })
         })
-    }
-
-    fn provider_id(&self) -> &'static str {
-        "claude"
     }
 }
 
@@ -108,29 +144,20 @@ impl AgentProvider for ClaudeProvider {
 /// # Errors
 ///
 /// Returns an [`std::io::Error`] if the current directory cannot be determined.
-pub fn default_worktree() -> std::io::Result<PathBuf> {
+pub fn default_worktree() -> std::io::Result<std::path::PathBuf> {
     std::env::current_dir()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::AgentSpec;
 
-    fn make_spec(worktree: Option<PathBuf>) -> AgentSpec {
-        AgentSpec {
-            label: "test-session".to_owned(),
-            provider: "claude".to_owned(),
-            prompt: None,
-            worktree,
-        }
+    fn make_spec(worktree: Option<String>) -> AgentSpec {
+        AgentSpec { worktree }
     }
 
     #[test]
     fn build_command_no_worktree_has_no_current_dir_override() {
-        let provider = ClaudeProvider::new();
-        assert_eq!(provider.provider_id(), "claude");
-
         let spec = make_spec(None);
         // Ensure build_command_with_bin returns without panic.
         let _cmd = build_command_with_bin("echo", &spec);
@@ -140,7 +167,7 @@ mod tests {
     fn build_command_with_worktree_sets_current_dir() {
         let dir = tempfile::tempdir().expect("tempdir");
         let path = dir.path().to_path_buf();
-        let spec = make_spec(Some(path.clone()));
+        let spec = make_spec(Some(path.to_string_lossy().into_owned()));
 
         let cmd = build_command_with_bin("echo", &spec);
         let std_cmd = cmd.as_std();

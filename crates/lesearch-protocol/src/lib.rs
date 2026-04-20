@@ -134,6 +134,46 @@ pub struct SpawnResult {
     pub streams: StreamIds,
 }
 
+// ── agent.output notification ──────────────────────────────────────────────
+
+/// A JSON-RPC 2.0 **notification** (no `id` field).
+///
+/// Sent server → client for push-style events such as `agent.output`.
+/// Clients must not reply to notifications.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RpcNotification {
+    /// Always `"2.0"`.
+    pub jsonrpc: String,
+    /// Notification method name, e.g. `"agent.output"`.
+    pub method: String,
+    /// Notification payload.
+    pub params: serde_json::Value,
+}
+
+impl RpcNotification {
+    /// Construct a notification from a method name and serialisable params.
+    #[must_use]
+    pub fn new(method: impl Into<String>, params: serde_json::Value) -> Self {
+        Self {
+            jsonrpc: "2.0".to_owned(),
+            method: method.into(),
+            params,
+        }
+    }
+}
+
+/// Parameters carried in an `agent.output` notification.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AgentOutputParams {
+    /// The stable agent ID returned by `agent.spawn`.
+    pub agent_id: String,
+    /// Which stream the data came from: `"stdout"` or `"stderr"`.
+    pub stream: String,
+    /// UTF-8 chunk of output data.
+    pub data: String,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -159,5 +199,32 @@ mod tests {
         assert_eq!(r2.streams.stdin, 1);
         assert_eq!(r2.streams.stdout, 2);
         assert_eq!(r2.streams.stderr, 3);
+    }
+
+    #[test]
+    fn notification_has_no_id_field() {
+        let n = RpcNotification::new(
+            "agent.output",
+            serde_json::json!({"agentId": "x", "stream": "stdout", "data": "hi"}),
+        );
+        let s = serde_json::to_string(&n).expect("serialize notification");
+        let v: serde_json::Value = serde_json::from_str(&s).expect("parse");
+        assert_eq!(v["jsonrpc"], "2.0");
+        assert_eq!(v["method"], "agent.output");
+        assert!(v.get("id").is_none(), "notification must not have id field");
+    }
+
+    #[test]
+    fn agent_output_params_roundtrips() {
+        let p = AgentOutputParams {
+            agent_id: "ag-1".to_owned(),
+            stream: "stdout".to_owned(),
+            data: "hello\n".to_owned(),
+        };
+        let s = serde_json::to_string(&p).expect("serialize");
+        let p2: AgentOutputParams = serde_json::from_str(&s).expect("deserialize");
+        assert_eq!(p2.agent_id, "ag-1");
+        assert_eq!(p2.stream, "stdout");
+        assert_eq!(p2.data, "hello\n");
     }
 }
