@@ -11,8 +11,20 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  bootstrap:
+    name: Bootstrap
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect workspaces
+        run: |
+          echo "Rust crates present: ${{ hashFiles('crates/**/Cargo.toml') != '' }}"
+          echo "Web package present: ${{ hashFiles('web/package.json') != '' }}"
+          echo "Scaffold CI OK — job-specific checks run once workspaces are populated."
+
   rust:
     name: Rust
+    needs: bootstrap
     runs-on: ubuntu-latest
     if: hashFiles('crates/**/Cargo.toml') != ''
     steps:
@@ -27,6 +39,7 @@ jobs:
 
   web:
     name: Web
+    needs: bootstrap
     runs-on: ubuntu-latest
     if: hashFiles('web/package.json') != ''
     defaults:
