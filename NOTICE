@@ -1,0 +1,13 @@
+lecode
+Copyright 2026 Arya Teja Rudraraju
+
+This product includes software developed by the lecode authors.
+Licensed under the Apache License, Version 2.0.
+
+## Conceptual inspiration
+
+lecode draws architectural inspiration from several open-source agent-management projects, notably Paseo (AGPL-3.0). Per clean-room practice, no source code or prose from AGPL projects has been incorporated into this repository. Concept extraction occurs via the SPEC/ process — see SPEC/README.md.
+
+## Code lineage
+
+Portions of lecode's Rust code are ported from the lesearch repository (Apache-2.0, same author) with attribution retained where applicable.

@@ -1,0 +1,15 @@
+{
+  "name": "lecode",
+  "version": "0.0.0",
+  "private": true,
+  "description": "One terminal. Every agent. Every machine.",
+  "license": "Apache-2.0",
+  "author": "Arya Teja Rudraraju",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aryateja2106/lecode.git"
+  },
+  "workspaces": [
+    "web"
+  ]
+}

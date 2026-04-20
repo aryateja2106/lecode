@@ -1,0 +1,14 @@
+[workspace]
+members = []
+resolver = "3"
+
+[workspace.package]
+edition = "2024"
+license = "Apache-2.0"
+repository = "https://github.com/aryateja2106/lecode"
+authors = ["Arya Teja Rudraraju"]
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = "symbols"
