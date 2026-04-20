@@ -15,6 +15,9 @@ categories.workspace = true
 name = "lesearch-daemon"
 path = "src/main.rs"
 
+[features]
+test-provider = ["lesearch-providers/test-provider"]
+
 [dependencies]
 lesearch-protocol = { path = "../lesearch-protocol" }
 lesearch-storage = { path = "../lesearch-storage" }
@@ -31,6 +34,8 @@ anyhow.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
 uuid.workspace = true
+clap.workspace = true
+chrono.workspace = true
 
 [dev-dependencies]
 lesearch-protocol = { path = "../lesearch-protocol" }
