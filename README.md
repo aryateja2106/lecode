@@ -13,14 +13,13 @@
 - A Rust daemon that runs on your hardware.
 - Spawns any CLI coding agent (Claude Code, Codex, OpenCode …) on demand.
 - Streams the agent's stdout back over WebSocket as JSON-RPC `agent.output` notifications.
-- 13 tests passing. Apache-2.0.
+- 21 tests passing. Apache-2.0.
 
 The daemon exposes a single WebSocket endpoint (`ws://127.0.0.1:6767/ws`) speaking
-JSON-RPC 2.0. One method is live: `agent.spawn`. The rest arrive in v0.1.
+JSON-RPC 2.0. Live methods: `agent.spawn`, `agent.list`, `agent.stop`, `server.handshake`.
 
 ## What lecode is NOT (yet)
 
-- No `agent.list` / `agent.stop` / `server.handshake` methods.
 - No mobile app.
 - No desktop app.
 - No remote relay.
