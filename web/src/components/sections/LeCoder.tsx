@@ -74,8 +74,8 @@ export default function LeCoder() {
             margin: "0 0 72px",
           }}
         >
-          LeCoder is our open-source agent orchestration layer. Use it
-          standalone or as the foundation for a full LeSearch AI setup.
+          LeCoder is our open-source agent orchestration layer. Use it standalone or as the
+          foundation for a full LeSearch AI setup.
         </p>
       </FadeIn>
 
@@ -139,8 +139,7 @@ export default function LeCoder() {
                   border: "1px solid #27272A",
                   borderRadius: "8px",
                   marginBottom: "20px",
-                  fontFamily:
-                    "'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', monospace",
+                  fontFamily: "'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', monospace",
                   fontSize: "12px",
                   color: "#e0e7ff",
                 }}
@@ -159,9 +158,7 @@ export default function LeCoder() {
                 {tool.description}
               </p>
 
-              <p style={{ fontSize: "12px", color: "#3F3F46", margin: "0" }}>
-                {tool.detail}
-              </p>
+              <p style={{ fontSize: "12px", color: "#3F3F46", margin: "0" }}>{tool.detail}</p>
             </div>
           </FadeIn>
         ))}
@@ -216,12 +213,8 @@ export default function LeCoder() {
               whiteSpace: "nowrap",
               transition: "border-color 0.15s",
             }}
-            onMouseEnter={(e) =>
-              ((e.target as HTMLElement).style.borderColor = "#52525B")
-            }
-            onMouseLeave={(e) =>
-              ((e.target as HTMLElement).style.borderColor = "#27272A")
-            }
+            onMouseEnter={(e) => ((e.target as HTMLElement).style.borderColor = "#52525B")}
+            onMouseLeave={(e) => ((e.target as HTMLElement).style.borderColor = "#27272A")}
           >
             Star on GitHub
           </a>

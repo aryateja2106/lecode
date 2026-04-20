@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -21,14 +21,10 @@ export default function Header() {
         right: 0,
         zIndex: 50,
         transition: "background 0.2s, border-color 0.2s",
-        background: scrolled
-          ? "rgba(9,9,11,0.85)"
-          : "transparent",
+        background: scrolled ? "rgba(9,9,11,0.85)" : "transparent",
         backdropFilter: scrolled ? "blur(12px)" : "none",
         WebkitBackdropFilter: scrolled ? "blur(12px)" : "none",
-        borderBottom: scrolled
-          ? "1px solid rgba(39,39,42,0.8)"
-          : "1px solid transparent",
+        borderBottom: scrolled ? "1px solid rgba(39,39,42,0.8)" : "1px solid transparent",
       }}
     >
       <div
@@ -72,12 +68,8 @@ export default function Header() {
               textDecoration: "none",
               transition: "color 0.15s",
             }}
-            onMouseEnter={(e) =>
-              ((e.target as HTMLElement).style.color = "#FAFAFA")
-            }
-            onMouseLeave={(e) =>
-              ((e.target as HTMLElement).style.color = "#A1A1AA")
-            }
+            onMouseEnter={(e) => ((e.target as HTMLElement).style.color = "#FAFAFA")}
+            onMouseLeave={(e) => ((e.target as HTMLElement).style.color = "#A1A1AA")}
           >
             Features
           </a>
@@ -89,12 +81,8 @@ export default function Header() {
               textDecoration: "none",
               transition: "color 0.15s",
             }}
-            onMouseEnter={(e) =>
-              ((e.target as HTMLElement).style.color = "#FAFAFA")
-            }
-            onMouseLeave={(e) =>
-              ((e.target as HTMLElement).style.color = "#A1A1AA")
-            }
+            onMouseEnter={(e) => ((e.target as HTMLElement).style.color = "#FAFAFA")}
+            onMouseLeave={(e) => ((e.target as HTMLElement).style.color = "#A1A1AA")}
           >
             LeCoder
           </a>
@@ -106,12 +94,8 @@ export default function Header() {
               textDecoration: "none",
               transition: "color 0.15s",
             }}
-            onMouseEnter={(e) =>
-              ((e.target as HTMLElement).style.color = "#FAFAFA")
-            }
-            onMouseLeave={(e) =>
-              ((e.target as HTMLElement).style.color = "#A1A1AA")
-            }
+            onMouseEnter={(e) => ((e.target as HTMLElement).style.color = "#FAFAFA")}
+            onMouseLeave={(e) => ((e.target as HTMLElement).style.color = "#A1A1AA")}
           >
             Docs
           </a>
@@ -125,12 +109,8 @@ export default function Header() {
               textDecoration: "none",
               transition: "color 0.15s",
             }}
-            onMouseEnter={(e) =>
-              ((e.target as HTMLElement).style.color = "#FAFAFA")
-            }
-            onMouseLeave={(e) =>
-              ((e.target as HTMLElement).style.color = "#A1A1AA")
-            }
+            onMouseEnter={(e) => ((e.target as HTMLElement).style.color = "#FAFAFA")}
+            onMouseLeave={(e) => ((e.target as HTMLElement).style.color = "#A1A1AA")}
           >
             GitHub
           </a>
@@ -152,12 +132,8 @@ export default function Header() {
             transition: "opacity 0.15s",
             letterSpacing: "-0.01em",
           }}
-          onMouseEnter={(e) =>
-            ((e.target as HTMLElement).style.opacity = "0.88")
-          }
-          onMouseLeave={(e) =>
-            ((e.target as HTMLElement).style.opacity = "1")
-          }
+          onMouseEnter={(e) => ((e.target as HTMLElement).style.opacity = "0.88")}
+          onMouseLeave={(e) => ((e.target as HTMLElement).style.opacity = "1")}
         >
           Get Started
         </a>

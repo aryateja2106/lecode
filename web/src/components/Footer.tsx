@@ -63,23 +63,15 @@ export default function Footer() {
               key={link.label}
               href={link.href}
               target={link.href.startsWith("http") ? "_blank" : undefined}
-              rel={
-                link.href.startsWith("http")
-                  ? "noopener noreferrer"
-                  : undefined
-              }
+              rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}
               style={{
                 fontSize: "13px",
                 color: "#52525B",
                 textDecoration: "none",
                 transition: "color 0.15s",
               }}
-              onMouseEnter={(e) =>
-                ((e.target as HTMLElement).style.color = "#A1A1AA")
-              }
-              onMouseLeave={(e) =>
-                ((e.target as HTMLElement).style.color = "#52525B")
-              }
+              onMouseEnter={(e) => ((e.target as HTMLElement).style.color = "#A1A1AA")}
+              onMouseLeave={(e) => ((e.target as HTMLElement).style.color = "#52525B")}
             >
               {link.label}
             </a>

@@ -103,8 +103,8 @@ export default function Waitlist() {
               margin: "0 auto 48px",
             }}
           >
-            We are onboarding power users who run agents across multiple
-            machines. Spots are limited.
+            We are onboarding power users who run agents across multiple machines. Spots are
+            limited.
           </p>
 
           {done ? (
@@ -162,12 +162,8 @@ export default function Waitlist() {
                   outline: "none",
                   transition: "border-color 0.15s",
                 }}
-                onFocus={(e) =>
-                  ((e.target as HTMLInputElement).style.borderColor = "#52525B")
-                }
-                onBlur={(e) =>
-                  ((e.target as HTMLInputElement).style.borderColor = "#27272A")
-                }
+                onFocus={(e) => ((e.target as HTMLInputElement).style.borderColor = "#52525B")}
+                onBlur={(e) => ((e.target as HTMLInputElement).style.borderColor = "#27272A")}
               />
               <button
                 type="submit"

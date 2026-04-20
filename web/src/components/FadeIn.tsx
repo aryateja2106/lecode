@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface FadeInProps {
   children: React.ReactNode;
@@ -15,11 +15,7 @@ interface FadeInProps {
  * - Adds a subtle animation when JavaScript runs and IntersectionObserver fires
  * - Falls back gracefully when IntersectionObserver is unavailable
  */
-export default function FadeIn({
-  children,
-  delay = 0,
-  style,
-}: FadeInProps) {
+export default function FadeIn({ children, delay = 0, style }: FadeInProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   const [jsReady, setJsReady] = useState(false);
@@ -57,7 +53,7 @@ export default function FadeIn({
           observer.disconnect();
         }
       },
-      { threshold: 0.05 }
+      { threshold: 0.05 },
     );
 
     observer.observe(el);
@@ -70,14 +66,8 @@ export default function FadeIn({
       style={{
         ...style,
         opacity: jsReady ? (visible ? 1 : 0) : 1,
-        transform: jsReady
-          ? visible
-            ? "translateY(0)"
-            : "translateY(20px)"
-          : "none",
-        transition: jsReady
-          ? "opacity 0.55s ease, transform 0.55s ease"
-          : "none",
+        transform: jsReady ? (visible ? "translateY(0)" : "translateY(20px)") : "none",
+        transition: jsReady ? "opacity 0.55s ease, transform 0.55s ease" : "none",
       }}
     >
       {children}

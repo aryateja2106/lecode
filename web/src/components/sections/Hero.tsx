@@ -24,31 +24,38 @@ const terminalLines = [
 function QRCode() {
   const size = 8;
   const pattern = [
-    [1,1,1,1,1,1,1,0,1,0,1,0,1,0,1,1,1,1,1,1,1],
-    [1,0,0,0,0,0,1,0,0,1,0,1,0,0,1,0,0,0,0,0,1],
-    [1,0,1,1,1,0,1,0,1,0,1,0,1,0,1,0,1,1,1,0,1],
-    [1,0,1,1,1,0,1,0,0,0,0,1,0,0,1,0,1,1,1,0,1],
-    [1,0,1,1,1,0,1,0,1,1,0,0,1,0,1,0,1,1,1,0,1],
-    [1,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,1],
-    [1,1,1,1,1,1,1,0,1,0,1,0,1,0,1,1,1,1,1,1,1],
-    [0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0],
-    [1,0,1,1,0,1,1,1,0,0,1,0,1,1,0,1,0,1,1,0,1],
-    [0,1,0,0,1,0,0,0,1,1,0,1,0,0,1,0,1,0,0,1,0],
-    [1,1,0,1,0,1,1,0,1,0,1,0,1,0,1,1,0,1,0,1,1],
-    [0,0,1,0,1,0,0,1,0,1,0,1,0,1,0,0,1,0,1,0,0],
-    [1,0,1,0,1,1,1,0,1,0,1,0,1,1,1,0,1,0,1,1,1],
-    [0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,1,0,1,0,0,0],
-    [1,1,1,1,1,1,1,0,1,0,0,1,1,0,1,0,1,0,1,1,0],
-    [1,0,0,0,0,0,1,0,0,0,1,0,0,1,0,1,0,1,0,0,1],
-    [1,0,1,1,1,0,1,0,1,1,0,1,1,0,1,0,1,1,0,1,0],
-    [1,0,1,1,1,0,1,0,0,0,0,0,0,0,1,0,0,0,1,0,1],
-    [1,0,1,1,1,0,1,0,1,0,1,1,0,1,0,1,0,0,1,0,0],
-    [1,0,0,0,0,0,1,0,0,1,0,0,1,0,1,0,1,1,0,1,0],
-    [1,1,1,1,1,1,1,0,1,0,1,1,0,0,1,0,0,1,0,1,1],
+    [1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1],
+    [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1],
+    [1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1],
+    [1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1],
+    [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1],
+    [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
+    [1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [1, 0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1],
+    [0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0],
+    [1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1],
+    [0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0],
+    [1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0],
+    [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1],
+    [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0],
+    [1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1],
+    [1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0],
+    [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0],
+    [1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1],
   ];
 
   return (
-    <div style={{ display: "inline-block", background: "#FAFAFA", padding: "6px", borderRadius: "4px" }}>
+    <div
+      style={{
+        display: "inline-block",
+        background: "#FAFAFA",
+        padding: "6px",
+        borderRadius: "4px",
+      }}
+    >
       {pattern.map((row, r) => (
         <div key={r} style={{ display: "flex" }}>
           {row.map((cell, c) => (
@@ -154,8 +161,8 @@ export default function Hero() {
           fontWeight: "400",
         }}
       >
-        Not just Claude and Codex. Every agent you pay for — accessible from
-        any device, across every machine you own.
+        Not just Claude and Codex. Every agent you pay for — accessible from any device, across
+        every machine you own.
       </motion.p>
 
       {/* CTAs */}
@@ -186,12 +193,8 @@ export default function Hero() {
             letterSpacing: "-0.01em",
             transition: "opacity 0.15s",
           }}
-          onMouseEnter={(e) =>
-            ((e.target as HTMLElement).style.opacity = "0.88")
-          }
-          onMouseLeave={(e) =>
-            ((e.target as HTMLElement).style.opacity = "1")
-          }
+          onMouseEnter={(e) => ((e.target as HTMLElement).style.opacity = "0.88")}
+          onMouseLeave={(e) => ((e.target as HTMLElement).style.opacity = "1")}
         >
           Get Started
         </a>
@@ -214,12 +217,8 @@ export default function Hero() {
             letterSpacing: "-0.01em",
             transition: "border-color 0.15s",
           }}
-          onMouseEnter={(e) =>
-            ((e.target as HTMLElement).style.borderColor = "#52525B")
-          }
-          onMouseLeave={(e) =>
-            ((e.target as HTMLElement).style.borderColor = "#27272A")
-          }
+          onMouseEnter={(e) => ((e.target as HTMLElement).style.borderColor = "#52525B")}
+          onMouseLeave={(e) => ((e.target as HTMLElement).style.borderColor = "#27272A")}
         >
           View on GitHub
         </a>
@@ -259,39 +258,33 @@ export default function Hero() {
             justifyContent: "center",
           }}
         >
-          {[
-            "Claude",
-            "Cursor",
-            "Amp",
-            "Codex",
-            "Droid",
-            "Gemini",
-            "Copilot",
-          ].map((agent, i, arr) => (
-            <span key={agent} style={{ display: "flex", alignItems: "center" }}>
-              <span
-                style={{
-                  fontSize: "13px",
-                  fontWeight: "500",
-                  color: "#71717A",
-                  padding: "0 14px",
-                  letterSpacing: "-0.01em",
-                }}
-              >
-                {agent}
-              </span>
-              {i < arr.length - 1 && (
+          {["Claude", "Cursor", "Amp", "Codex", "Droid", "Gemini", "Copilot"].map(
+            (agent, i, arr) => (
+              <span key={agent} style={{ display: "flex", alignItems: "center" }}>
                 <span
                   style={{
-                    width: "1px",
-                    height: "14px",
-                    background: "#27272A",
-                    display: "inline-block",
+                    fontSize: "13px",
+                    fontWeight: "500",
+                    color: "#71717A",
+                    padding: "0 14px",
+                    letterSpacing: "-0.01em",
                   }}
-                />
-              )}
-            </span>
-          ))}
+                >
+                  {agent}
+                </span>
+                {i < arr.length - 1 && (
+                  <span
+                    style={{
+                      width: "1px",
+                      height: "14px",
+                      background: "#27272A",
+                      display: "inline-block",
+                    }}
+                  />
+                )}
+              </span>
+            ),
+          )}
           <span style={{ display: "flex", alignItems: "center" }}>
             <span
               style={{
@@ -328,8 +321,7 @@ export default function Hero() {
           border: "1px solid #27272A",
           background: "#0D0D0F",
           overflow: "hidden",
-          boxShadow:
-            "0 0 0 1px rgba(255,255,255,0.04) inset, 0 32px 64px rgba(0,0,0,0.6)",
+          boxShadow: "0 0 0 1px rgba(255,255,255,0.04) inset, 0 32px 64px rgba(0,0,0,0.6)",
         }}
       >
         {/* Terminal title bar */}
@@ -362,8 +354,7 @@ export default function Hero() {
               textAlign: "center",
               fontSize: "12px",
               color: "#52525B",
-              fontFamily:
-                "'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', monospace",
+              fontFamily: "'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', monospace",
             }}
           >
             terminal — zsh
@@ -374,8 +365,7 @@ export default function Hero() {
         <div
           style={{
             padding: "20px 24px",
-            fontFamily:
-              "'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', monospace",
+            fontFamily: "'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', monospace",
             fontSize: "13px",
             lineHeight: "1.7",
           }}
@@ -397,16 +387,8 @@ export default function Hero() {
                   minHeight: line.text === "" ? "8px" : "auto",
                 }}
               >
-                {line.prompt && (
-                  <span style={{ color: "#A1A1AA", marginRight: "8px" }}>
-                    ~
-                  </span>
-                )}
-                {line.prompt && (
-                  <span style={{ color: "#52525B", marginRight: "8px" }}>
-                    $
-                  </span>
-                )}
+                {line.prompt && <span style={{ color: "#A1A1AA", marginRight: "8px" }}>~</span>}
+                {line.prompt && <span style={{ color: "#52525B", marginRight: "8px" }}>$</span>}
                 {line.prefix && (
                   <span
                     style={{
@@ -423,12 +405,12 @@ export default function Hero() {
                     color: line.prompt
                       ? "#FAFAFA"
                       : line.dim
-                      ? "#52525B"
-                      : line.code
-                      ? "#e0e7ff"
-                      : line.bold
-                      ? "#FAFAFA"
-                      : "#A1A1AA",
+                        ? "#52525B"
+                        : line.code
+                          ? "#e0e7ff"
+                          : line.bold
+                            ? "#FAFAFA"
+                            : "#A1A1AA",
                     fontWeight: line.bold ? "600" : "400",
                   }}
                 >

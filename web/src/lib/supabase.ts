@@ -6,9 +6,7 @@ const supabaseAnonKey =
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-export async function joinWaitlist(
-  email: string
-): Promise<{ success: boolean; message: string }> {
+export async function joinWaitlist(email: string): Promise<{ success: boolean; message: string }> {
   try {
     const { error } = await supabase
       .from("waitlist")

@@ -1,13 +1,13 @@
+import Footer from "@/components/Footer";
 import Header from "@/components/Header";
-import Hero from "@/components/sections/Hero";
-import Problem from "@/components/sections/Problem";
+import Architecture from "@/components/sections/Architecture";
 import Comparison from "@/components/sections/Comparison";
+import Hero from "@/components/sections/Hero";
 import HowItWorks from "@/components/sections/HowItWorks";
 import LeCoder from "@/components/sections/LeCoder";
-import Architecture from "@/components/sections/Architecture";
 import Pricing from "@/components/sections/Pricing";
+import Problem from "@/components/sections/Problem";
 import Waitlist from "@/components/sections/Waitlist";
-import Footer from "@/components/Footer";
 
 export default function Home() {
   return (
