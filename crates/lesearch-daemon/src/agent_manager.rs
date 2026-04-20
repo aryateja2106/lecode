@@ -1,20 +1,35 @@
-//! Agent lifecycle helpers.
-//!
-//! Utility functions for translating wire-level [`SpawnParams`] into the
-//! provider-level [`AgentSpec`] used by [`AgentProvider::spawn`].
+//! Agent lifecycle manager.
 
-use lesearch_protocol::SpawnParams;
-use lesearch_providers::AgentSpec;
+use std::path::PathBuf;
+
+use lesearch_providers::{AgentProvider, AgentSpec, ProviderError, SpawnParams, SpawnResult};
 
 /// Converts a [`SpawnParams`] into a resolved [`AgentSpec`].
 ///
-/// Currently a simple field projection. Future revisions may add path
-/// validation or provider-specific resolution here.
-#[must_use]
-pub fn build_spec(params: &SpawnParams) -> AgentSpec {
-    AgentSpec {
-        worktree: params.worktree.clone(),
-    }
+/// # Errors
+///
+/// Currently infallible; returns `Ok` in all cases.
+pub fn build_spec(params: &SpawnParams) -> Result<AgentSpec, ProviderError> {
+    let worktree: Option<PathBuf> = params.worktree.as_deref().map(PathBuf::from);
+    Ok(AgentSpec {
+        label: params.label.clone(),
+        provider: params.provider.clone(),
+        prompt: params.prompt.clone(),
+        worktree,
+    })
+}
+
+/// Spawn an agent using the given provider and spawn parameters.
+///
+/// # Errors
+///
+/// Propagates any [`ProviderError`] returned by the provider adapter.
+pub async fn spawn_agent(
+    provider: &dyn AgentProvider,
+    params: &SpawnParams,
+) -> Result<SpawnResult, ProviderError> {
+    let spec = build_spec(params)?;
+    provider.spawn(&spec).await
 }
 
 #[cfg(test)]
@@ -23,7 +38,9 @@ mod tests {
 
     fn make_params(worktree: Option<&str>) -> SpawnParams {
         SpawnParams {
+            label: "test".to_owned(),
             provider: "claude".to_owned(),
+            prompt: None,
             worktree: worktree.map(str::to_owned),
         }
     }
@@ -31,14 +48,14 @@ mod tests {
     #[test]
     fn build_spec_threads_worktree_into_agent_spec() {
         let params = make_params(Some("/tmp/my-worktree"));
-        let spec = build_spec(&params);
-        assert_eq!(spec.worktree, Some("/tmp/my-worktree".to_owned()));
+        let spec = build_spec(&params).expect("build_spec should succeed");
+        assert_eq!(spec.worktree, Some(PathBuf::from("/tmp/my-worktree")));
     }
 
     #[test]
     fn build_spec_none_worktree_stays_none() {
         let params = make_params(None);
-        let spec = build_spec(&params);
+        let spec = build_spec(&params).expect("build_spec should succeed");
         assert_eq!(spec.worktree, None);
     }
 }
