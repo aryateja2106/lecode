@@ -16,8 +16,12 @@ lesearch-protocol = { path = "../lesearch-protocol" }
 tokio.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+futures.workspace = true
 thiserror.workspace = true
 tracing.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
 
 [lints]
 workspace = true
