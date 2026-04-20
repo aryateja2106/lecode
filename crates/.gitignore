@@ -1,0 +1,48 @@
+# Rust
+/target/
+**/*.rs.bk
+Cargo.lock.bak
+
+# Node / Tauri (Phase A UI)
+node_modules/
+dist/
+.vite/
+.tauri/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Env / secrets
+.env
+.env.local
+*.pem
+*.key
+*.p12
+!docs/**/*.key.example
+
+# Local dev state
+.lesearch/
+lesearch.sock
+lesearch.log
+coverage/
+
+# Build artifacts
+*.dmg
+*.app
+out/
+release/
+
+# OMC / agent state (not source)
+.omc/
+
+# Claude Code / session artifacts
+.claude/worktrees/

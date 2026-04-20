@@ -1,0 +1,62 @@
+# LeSearch AI — Full Context for AI Agents
+
+> Every Agent. Every Machine. One Terminal.
+
+## Overview
+LeSearch AI is an agent infrastructure platform that solves four problems no other tool covers simultaneously:
+1. Secure agent setup — guided SSH hardening, agent isolation, proper credential management
+2. Mobile access — control any agent from your phone, not just Claude or Codex
+3. Multi-machine orchestration — SSH + VNC + Headscale VPN across all your machines
+4. Subscription maximization — use every agent you already pay for, from anywhere
+
+## The Problem
+AI engineers pay $20-$200/month for multiple coding agent subscriptions (Claude Code, Cursor, Codex, Amp, Copilot). Most use 20-40% of capacity. Worse, they can only access agents from the machine they're installed on. There's no way to:
+- Send a task to Claude Code on your laptop while you're at lunch
+- Monitor what Codex is doing on your server from your phone
+- See the GUI of your Raspberry Pi agent from your iPad
+- Orchestrate multiple agents across multiple machines from one interface
+
+## How It Works
+1. Install: `npx lecoder-mconnect` on any machine with agents
+2. Connect: Scan QR code from your phone or enter pairing code
+3. Control: Send commands, approve actions, monitor progress from any device
+4. Orchestrate: See all your machines and agents in one view
+
+## Architecture
+Phone/Web Client <-> Cloudflare Tunnel <-> MConnect CLI <-> Agent CLIs (Claude/Codex/Amp/Cursor/etc.)
+
+The CLI acts as a gateway — it routes your prompts to whichever agent CLI is installed, streams responses back to your device over a secure WebSocket tunnel. Your existing subscriptions are used directly. No proxy accounts, no credential sharing, no ToS violations.
+
+## Supported Agents
+- Claude Code (Anthropic)
+- Codex (OpenAI)
+- Amp (Sourcegraph)
+- Cursor Agent
+- Droid (Factory AI)
+- Gemini CLI (Google)
+- GitHub Copilot
+- Any CLI-based agent
+
+## Open Source: LeCoder
+LeCoder is the open-source core of LeSearch AI.
+- Repository: https://github.com/aryateja2106/lecoder-mconnect
+- License: MIT
+- npm: lecoder-mconnect
+- Components: CLI tunnel, web terminal client, iOS app, agent presets
+
+## Pricing
+- Free: 10 sessions/month, web + mobile access
+- Pro ($20/mo): Unlimited sessions, priority support
+- Enterprise: Custom, team collaboration, SLA
+
+## Competitive Context
+- vs Omnara (YC S25): Supports 7+ agents (not just 2), multi-machine, open source
+- vs Macky: Cross-platform (not Apple-only), multi-agent, multi-machine
+- vs Claude Cowork: Works with ALL agents, not just Claude
+- vs Emdash (YC W26): Has mobile access, not desktop-only
+
+## Company
+- Founded by Arya Teja Rudraraju, San Francisco
+- Validated at Nevermined Autonomous Business Hackathon (21+ purchases)
+- Website: https://lesearch.ai
+- GitHub: https://github.com/aryateja2106
