@@ -49,9 +49,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
       - run: npm ci
-        working-directory: web
-      - run: npm run typecheck
-        working-directory: web
-      - run: npm run build
-        working-directory: web
+      - run: npm --workspace web run typecheck
+      - run: npm --workspace web run build
