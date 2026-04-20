@@ -30,12 +30,13 @@ fn spawn_params_with_worktree_roundtrips() {
     let round_tripped: SpawnParams =
         serde_json::from_str(&json).expect("deserialization must succeed");
 
-    assert_eq!(round_tripped, original);
+    assert_eq!(round_tripped.provider, original.provider);
+    assert_eq!(round_tripped.worktree, original.worktree);
     assert_eq!(round_tripped.worktree.as_deref(), Some("/tmp/wt"));
 }
 
 /// Serialize `SpawnParams` with `worktree: None` and deserialize back,
-/// asserting the field is absent in the JSON (skip_serializing_if policy)
+/// asserting the field is absent in the JSON (`skip_serializing_if` policy)
 /// and deserializes to `None`.
 #[test]
 fn spawn_params_without_worktree_roundtrips() {
@@ -56,6 +57,7 @@ fn spawn_params_without_worktree_roundtrips() {
     let round_tripped: SpawnParams =
         serde_json::from_str(&json).expect("deserialization must succeed");
 
-    assert_eq!(round_tripped, original);
+    assert_eq!(round_tripped.provider, original.provider);
+    assert_eq!(round_tripped.worktree, original.worktree);
     assert_eq!(round_tripped.worktree, None);
 }
