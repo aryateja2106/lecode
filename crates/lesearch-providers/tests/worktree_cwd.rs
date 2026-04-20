@@ -13,7 +13,9 @@ fn provider_spawn_uses_worktree_cwd() {
     let worktree_path = dir.path().to_path_buf();
     let worktree_str = worktree_path.to_string_lossy().into_owned();
 
-    let spec = AgentSpec { worktree: Some(worktree_str) };
+    let spec = AgentSpec {
+        worktree: Some(worktree_str),
+    };
     let cmd = build_command_with_bin("echo", &spec);
     let std_cmd = cmd.as_std();
 
