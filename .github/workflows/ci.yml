@@ -1,32 +1,35 @@
 name: CI
-
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   bootstrap:
     name: Bootstrap
     runs-on: ubuntu-latest
+    outputs:
+      has_rust: ${{ steps.detect.outputs.has_rust }}
+      has_web: ${{ steps.detect.outputs.has_web }}
     steps:
       - uses: actions/checkout@v4
-      - name: Detect workspaces
+      - id: detect
         run: |
-          echo "Rust crates present: ${{ hashFiles('crates/**/Cargo.toml') != '' }}"
-          echo "Web package present: ${{ hashFiles('web/package.json') != '' }}"
-          echo "Scaffold CI OK — job-specific checks run once workspaces are populated."
-
+          if compgen -G 'crates/**/Cargo.toml' > /dev/null 2>&1; then
+            echo "has_rust=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_rust=false" >> "$GITHUB_OUTPUT"
+          fi
+          if [ -f web/package.json ]; then
+            echo "has_web=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_web=false" >> "$GITHUB_OUTPUT"
+          fi
   rust:
     name: Rust
     needs: bootstrap
+    if: needs.bootstrap.outputs.has_rust == 'true'
     runs-on: ubuntu-latest
-    if: hashFiles('crates/**/Cargo.toml') != ''
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -36,22 +39,19 @@ jobs:
       - run: cargo fmt --all -- --check
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo test --workspace --all-targets
-
   web:
     name: Web
     needs: bootstrap
+    if: needs.bootstrap.outputs.has_web == 'true'
     runs-on: ubuntu-latest
-    if: hashFiles('web/package.json') != ''
-    defaults:
-      run:
-        working-directory: web
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: web/package-lock.json
       - run: npm ci
+        working-directory: web
       - run: npm run typecheck
+        working-directory: web
       - run: npm run build
+        working-directory: web
