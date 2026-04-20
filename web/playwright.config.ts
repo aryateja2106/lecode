@@ -3,10 +3,8 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "./tests",
   timeout: 30_000,
-  retries: 0,
   use: {
     baseURL: "http://localhost:3001",
-    headless: true,
   },
   projects: [
     {
@@ -15,7 +13,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "PORT=3001 npm run dev",
+    command: "npm run dev -- --port 3001",
     url: "http://localhost:3001",
     reuseExistingServer: true,
     timeout: 60_000,
