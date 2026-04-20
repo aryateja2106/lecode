@@ -9,5 +9,4 @@
 #![doc(html_root_url = "https://docs.rs/lesearch-providers/0.0.1")]
 
 /// Built-in provider identifiers.
-pub const BUILTIN_PROVIDERS: &[&str] =
-    &["claude", "codex", "opencode", "gemini", "generic-a2a"];
+pub const BUILTIN_PROVIDERS: &[&str] = &["claude", "codex", "opencode", "gemini", "generic-a2a"];
